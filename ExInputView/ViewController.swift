@@ -12,8 +12,12 @@ import RxSwift
 import RxGesture
 
 class ViewController: UIViewController, KeyboardWrapperable {
+    private enum Policy {
+        static let countOfText = 700
+    }
     private enum Metric {
-        static let textViewHeight = UIScreen.main.bounds.height * 0.3
+        static let textViewHeight = UIScreen.main.bounds.height * 0.5
+        static let spacing = 30.0
     }
     
     private let textView = UITextView().then {
@@ -40,26 +44,27 @@ class ViewController: UIViewController, KeyboardWrapperable {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupUI()
         bind()
         setupKeybaordWrapper()
+        setupUI()
     }
     
     private func setupUI() {
         textView.text = textViewPlaceHolder
         textView.delegate = self
         
-        view.addSubview(textView)
+        keyboardSafeAreaView.addSubview(textView)
+        keyboardSafeAreaView.addSubview(button)
+        
         textView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(30)
             $0.leading.trailing.equalToSuperview().inset(30)
-            $0.height.equalTo(Metric.textViewHeight)
+            $0.height.equalTo(Metric.textViewHeight).priority(.medium)
+            $0.bottom.lessThanOrEqualTo(button.snp.top).offset(-Metric.spacing)
         }
-        
-        keyboardSafeAreaView.addSubview(button)
         button.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(120)
+            $0.height.equalTo(80)
         }
     }
     
@@ -94,7 +99,7 @@ extension ViewController: UITextViewDelegate {
         let newString = oldString.replacingCharacters(in: newRange, with: inputString).trimmingCharacters(in: .whitespacesAndNewlines)
 
         let characterCount = newString.count
-        guard characterCount <= 700 else { return false }
+        guard characterCount <= Policy.countOfText else { return false }
         return true
     }
 }
