@@ -11,8 +11,6 @@ import RxSwift
 
 private struct AssociatedKeys {
     static var isEnabled = "isEnabled"
-    static var keyboardWrapperView = "keyboardWrapperView"
-    static var keyboardSafeAreaView = "keyboardSafeAreaView"
 }
 
 protocol KeyboardWrapperable {
