@@ -42,7 +42,7 @@ extension KeyboardWrapperable where Self: UIViewController {
     private func setupLayout() {
         view.addSubview(keyboardWrapperView)
         view.addSubview(keyboardSafeAreaView)
-        
+
         keyboardWrapperView.snp.makeConstraints {
             $0.leading.trailing.bottom.equalToSuperview()
             $0.height.equalTo(0).priority(.high)
@@ -55,13 +55,21 @@ extension KeyboardWrapperable where Self: UIViewController {
     }
 
     private func observeKeyboardHeight() {
-        NotificationCenter.default.rx.notification(UIResponder.keyboardWillShowNotification)
-            .compactMap { $0.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect }
-            .map(\.height)
-            .distinctUntilChanged()
-            .bind(with: self, onNext: { ss, height in
+        NotificationCenter.default.rx.notification(UIResponder.keyboardWillChangeFrameNotification)
+            .bind(with: self, onNext: { ss, notification in
+                let uesrInfo = notification.userInfo
+                let beginFrame = uesrInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? CGRect
+                let endFrame = uesrInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+                
+                guard let beginFrame, let endFrame else { return }
+                
+                let beginFrameMinY = beginFrame.minY
+                let endFrameMinY = endFrame.minY
+                let isKeyboardUp = endFrameMinY < beginFrameMinY
+                let shownKeyboardHeight = isKeyboardUp ? endFrame.height : 0
+                
                 ss.keyboardWrapperView.snp.updateConstraints {
-                    $0.height.equalTo(height).priority(.high)
+                    $0.height.equalTo(shownKeyboardHeight).priority(.high)
                 }
                 UIView.transition(
                     with: ss.keyboardWrapperView,
@@ -71,5 +79,6 @@ extension KeyboardWrapperable where Self: UIViewController {
                 )
             })
             .disposed(by: disposeBag)
+
     }
 }
